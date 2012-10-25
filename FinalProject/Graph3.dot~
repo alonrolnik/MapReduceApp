@@ -1,0 +1,90 @@
+graph ranked_graph{
+ 
+                graph [fontsize=750];
+                edge  [fontsize=750];
+                node  [fontsize=750];
+                ranksep = 50;
+                nodesep = 100;
+                edge [style="setlinewidth(13)"]
+		node [style="setlinewidth(43)"]
+"Hui Wang"BigETS--"Yan Zhang"
+"Li Wang"BigETS--"Ying Wang"
+"Hui Wang"BigETS--"Wei Zhang"
+"Hui Wang"BigETS--"Wei Wang"
+"Li Wang"BigETS--"Jing Wang"
+"Li Wang"BigETS--"Jian Wang"
+"Li Wang"BigETS--"Hui Zhang"
+"Li Wang"BigETS--"Ying Zhang"
+"Li Wang"BigETS--"Yong Zhang"
+"Li Wang"BigETS--"Ming Li"
+"Li Wang"BigETS--"Li Li"
+"Li Wang"BigETS--"Wei Li"
+"Li Wang"BigETS--"Wei Wang"
+"Bo Zhang"BigETS--"Gang Chen"
+"Bo Zhang"BigETS--"Jun Zhang"
+"Bo Zhang"BigETS--"Hui Li"
+"Bo Zhang"BigETS--"Chao Wang"
+"Bo Zhang"BigETS--"Wei Chen"
+"Bo Zhang"BigETS--"Tao Wang"
+"Yang Li"[label= "Yang Li 483"]
+"Jing Liu"[label= "Jing Liu 483"]
+"Bo Zhang"BigETS--"Ying Liu"
+"Bo Zhang"BigETS--"Yan Li"
+"Bo Zhang"BigETS--"Jing Li"
+"Xin Liu"BigETS--"Yi Zhang"
+"Bo Zhang"BigETS--"Wei Zhang"
+"Bo Zhang"BigETS--"Jun Wang"
+"Xin Liu"BigETS--"Qing Li"
+"Bo Yang"[label= "Bo Yang 481"]
+"Xin Liu"BigETS--"Ying Li"
+"Xin Liu"BigETS--"Hui Zhang"
+"Xin Liu"BigETS--"Ying Zhang"
+"Xin Liu"BigETS--"Yang Yang"
+"Xin Liu"BigETS--"Ying Liu"
+"Xin Liu"BigETS--"Yu Zhang"
+"Xin Liu"BigETS--"Lei Wang"
+"Xin Liu"BigETS--"Li Zhang"
+"Xin Liu"BigETS--"Jun Wang"
+"Xin Liu"BigETS--"Wei Wang"
+"Wen Gao"[label= "Wen Gao 480"]
+"Jing Liu"BigETS--"Yan Chen"
+"Jing Liu"BigETS--"Bin Wang"
+"Jing Liu"BigETS--"Jun Liu"
+"Jing Liu"BigETS--"Lei Zhang"
+"Jing Liu"BigETS--"Yang Yang"
+"Jing Liu"BigETS--"Yi Wang"
+"Jing Liu"BigETS--"Jing Zhang"
+"Jing Liu"BigETS--"Li Li"
+"Jing Liu"BigETS--"Wei Zhang"
+"Jing Liu"BigETS--"Wei Wang"
+"Xin Chen"[label= "Xin Chen 479"]
+"Bo Yang"BigETS--"Jing Liu"
+"Bo Yang"BigETS--"Tao Wang"
+"Bo Yang"BigETS--"Hao Wang"
+"Bo Yang"BigETS--"Chao Wang"
+"Bo Yang"BigETS--"Jun Liu"
+"Bo Yang"BigETS--"Yan Wang"
+"Bo Yang"BigETS--"Ying Li"
+"Bo Yang"BigETS--"Lei Zhang"
+"Bo Yang"BigETS--"Ying Zhang"
+"Yang Li"BigETS--"Li Wang"
+"Bo Yang"BigETS--"Yu Zhang"
+"Bo Yang"BigETS--"Jing Li"
+"Bo Yang"BigETS--"Li Li"
+"Bo Yang"BigETS--"Wei Liu"
+"Bo Yang"BigETS--"Wei Wang"
+"Yang Li"BigETS--"Jun Zhang"
+"Yang Li"BigETS--"Jing Wang"
+"Yang Li"BigETS--"Hui Zhang"
+"Wen Gao"BigETS--"Yi Wang"
+"Wen Gao"BigETS--"Lei Wang"
+"Wen Gao"BigETS--"Yang Liu"
+"Wen Gao"BigETS--"Wei Wang"
+"Hong Liu"[label= "Hong Liu 478"]
+"Tao Li"[label= "Tao Li 477"]
+"Gang Li"[label= "Gang Li 477"]
+"Ian T. Foster"[label= "Ian T. Foster 475"]
+"Jun Li"[label= "Jun Li 471"]
+"Wen Gao"BigETS--"Jing Liu"
+"Wen Gao"BigETS--"Xin Liu"
+}

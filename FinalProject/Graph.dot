@@ -1,0 +1,10 @@
+digraph simple_hierarchy {
+graph [fontsize=1000];
+edge  [fontsize=1000];
+node  [fontsize=1000];
+ranksep = 600;
+nodesep = 80;
+edge [style="setlinewidth(13)"]
+node [style="setlinewidth(43)"]
+"Yehuda Ben-Shimol"[label= "Yehuda Ben-Shimol"]
+}

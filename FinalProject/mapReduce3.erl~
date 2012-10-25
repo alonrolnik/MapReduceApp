@@ -1,0 +1,93 @@
+%% Author: alon
+%% Created: Aug 16, 2012
+%% Description: TODO: Add description to mapReduce2
+-module(mapReduce3).
+
+-export([start/1]).
+
+start(BigETS) -> 
+				{ok,File_Name} = first_Time_Write_To_File(),
+				SortETS = ets:new(sortETS, [ordered_set,public]),
+				bigFold(BigETS, SortETS, File_Name).
+
+bigFold(BigETS, SortETS, File_Name)->
+									FirstKey = ets:first(BigETS),
+									case (FirstKey) of
+										'$end_of_table' -> io:format("~n end of table...~n"),
+														 %  timer:sleep(20000),
+														   finish(SortETS, File_Name);
+										_->
+											start_MapReduce(self(),BigETS, SortETS, FirstKey),
+											receive
+												finish -> %io:format("~nFinish Sub Graph... Write SortETS to degrees.txt... ~n "),
+														  bigFold(BigETS, SortETS, File_Name)
+											end
+									end.
+
+finish(SortETS, File_Name) -> 
+							io:format("...Convert ETS degree to DETS degree called degreeDets. ~n"),
+							{ok,Name}=dets:open_file(degreeDets,[{type,set}]),
+							Name = ets:to_dets(SortETS,Name),
+							ok=dets:close(Name),loop_Writing(SortETS, File_Name).
+
+loop_Writing(SortETS, File_Name) ->
+									Last_Key = ets:last(SortETS),
+									case (Last_Key) of
+										'$end_of_table' -> file:close(File_Name),
+														   map2!{stop},
+														   ok;
+										Key -> [{Key,Val}]= ets:lookup(SortETS, Key),
+											   NewVal = "\nDegree is:\s " ++ integer_to_list(Key) ++ "\s\s\sAuthors are:\s ",
+											   [file:write(File_Name,NewVal ++ [Author]) || Author <- lists:sort(Val)],
+												ets:delete(SortETS,Key),
+												loop_Writing(SortETS, File_Name)
+									end.
+	
+start_MapReduce(MainPID, BigETS, SortETS, Root)->
+												Fold_Pid = start_MapReduce_Fold(MainPID, BigETS, SortETS),
+												start_MapReduce_Map(BigETS, SortETS, Root, Fold_Pid).
+
+start_MapReduce_Fold(MainPID, BigETS, SortETS) ->
+												Fold_Pid=spawn(fun() -> fold(MainPID,BigETS, SortETS, 1, 0, 0, 0,[]) end),Fold_Pid.
+
+start_MapReduce_Map(BigETS, SortETS, Name, Fold_Pid) -> spawn(fun()-> check_For_Name(BigETS, SortETS, Name, Fold_Pid) end).
+															
+check_For_Name(BigETS, SortETS, Name, Fold_Pid) ->
+								  Case_Value = ets:lookup(BigETS, Name),
+								  	case (Case_Value) of
+										[] ->	Answer = {[],0};	
+										
+										[{Name,Colleagues}] ->	Length_Of_Coll = length(Colleagues),
+																Value = ets:lookup(SortETS, Length_Of_Coll),
+																case (Value) of
+																	[]-> ets:insert(SortETS, {Length_Of_Coll, Name});
+																	[{Key,Val}]-> NewVal = [Name]++Val,
+																				  ets:insert(SortETS, {Key,NewVal})
+																end,	
+																ets:delete(BigETS,Name),
+																Realy_Coll = [Coll || Coll <-Colleagues , true == ets:member(BigETS, Coll)],
+																Length_Of_Realy_Coll = length(Realy_Coll),
+
+																Answer = {Realy_Coll, Length_Of_Realy_Coll}
+								  	end,
+								  	%io:format("~n Answer is: ~p ~n",[Answer]),
+								  	Fold_Pid!Answer.
+
+fold(MainPID, _BigETS, _SortETS, Num_Of_Map, Num_Of_Map, Num_Of_Map, _Acc_Num_Of_Sons, _Acc_List_Of_Sons) ->
+																	MainPID!finish;
+
+fold(MainPID, BigETS, SortETS, Num_Of_Map, Num_Of_Map, _Counter_Empty, Acc_Num_Of_Sons, Acc_List_Of_Sons) ->
+																	FoldPID=self(),
+																	[spawn(fun () -> start_MapReduce_Map(BigETS, SortETS, Name, FoldPID) end) || Name <- Acc_List_Of_Sons],
+																	fold(MainPID, BigETS, SortETS, Acc_Num_Of_Sons, 0, 0, 0, []);
+fold(MainPID, BigETS, SortETS, Num_Of_Map, Counter_Num_Of_Map, Counter_Empty , Acc_Num_Of_Sons, Acc_List_Of_Sons) ->
+				receive
+					{List_Of_Sons, Length_Of_Realy_Coll} -> case (Length_Of_Realy_Coll) of
+																	  0 -> 	fold(MainPID, BigETS, SortETS, Num_Of_Map, Counter_Num_Of_Map+1, Counter_Empty+1, Acc_Num_Of_Sons,Acc_List_Of_Sons);
+																	  _ ->  fold(MainPID, BigETS, SortETS, Num_Of_Map, Counter_Num_Of_Map+1, Counter_Empty, Acc_Num_Of_Sons + Length_Of_Realy_Coll, List_Of_Sons++Acc_List_Of_Sons)
+																	end			
+				end.
+
+first_Time_Write_To_File() -> io:format("~nOpen the degrees file... Start ,MapReduce 2... ~n"),
+							  {ok,Name} = file:open("degrees.txt",[write]),
+							  file:write(Name, "This is The Authors Degree file sorted from high to low :\n"),{ok,Name}.

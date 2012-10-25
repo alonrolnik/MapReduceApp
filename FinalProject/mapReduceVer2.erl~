@@ -1,0 +1,127 @@
+%% Author: alon
+%% Created: Aug 16, 2012
+%% Description: TODO: Add description to mapReduce2
+-module(mapReduceVer2).
+-define(NumOfCores,erlang:system_info(logical_processors_available)).
+-define(SPREAD,100).
+
+-export([start/1]).
+
+%start(BigETS) -> 
+%				{ok,File_Name} = first_Time_Write_To_File(),
+%				SortETS = ets:new(sortETS, [ordered_set,public, {write_concurrency,true}]),
+%				Workers = [spawn(fun() -> work(BigETS,SortETS) end) || _ <-lists:seq(1, ?NumOfCores)],
+%				start_Spread(BigETS, ets:first(BigETS), SortETS, File_Name, Workers).				
+%start_Spread(BigETS,First_Key, SortETS, File_Name, Workers)->
+%				
+%				case (First_Key) of
+%					'$end_of_table' -> 
+%						io:format("~n end of table... signal to processes... send stop...~n"),[P!{stop,self()} || P <- Workers],
+%						io:format("~n Wait for Workers to finish and empty their queues...~n"),
+%						wait(SortETS,File_Name,BigETS,?NumOfCores, 0);
+%					_->
+%						Temp_Key = spread(First_Key, BigETS, Workers),
+%						start_Spread(BigETS,Temp_Key, SortETS, File_Name, Workers)	
+%				end.
+
+start(BigETS) -> io:format("test1~n"),
+				{ok,File_Name} = first_Time_Write_To_File(),
+				SortETS = ets:new(sortETS, [ordered_set,public, {write_concurrency,true}]),
+	%			%Workers = [spawn(fun() -> work(BigETS,SortETS) end) || _ <-lists:seq(1, ?NumOfCores)],
+				start_Spread(BigETS, ets:first(BigETS), SortETS, File_Name).			
+
+start_Spread(BigETS,First_Key, SortETS, File_Name) ->
+				io:format("~nGot ~p.   ",[First_Key]),
+				case (First_Key) of
+					'$end_of_table' -> 
+						io:format("~n end of table... signal to processes... send stop...~n"),[P!{stop,self()} || P <- Workers],
+						io:format("~n Wait for Workers to finish and empty their queues...~n"),
+						finish(SortETS, File_Name);
+					_->
+						[{Name,Colleagues}] = ets:lookup(BigETS, Name),
+						Length_Of_Colleagues = length(Colleagues),
+						Value = ets:lookup(SortETS, Length_Of_Colleagues),
+						case (Value) of
+							[]			-> 	io:format("adding new. ~n"),
+											ets:insert(SortETS,	{Length_Of_Colleagues,[Name]});
+							[{Key,Val}]	-> 	io:format("adding to ~p ~n.   ",[Key]),
+											NewVal = [Name]++Val,
+										  	ets:insert(0SortETS, {Key,NewVal})
+						end	
+						ets:delete(BigETS, ets:first(BigETS)),
+						start_Spread(BigETS,ets:first(BigETS), SortETS, File_Name),
+				end.
+
+
+wait(SortETS,File_Name,BigETS,NumOfCores, NumOfCores) ->
+														  ets:delete(BigETS),
+														  finish(SortETS, File_Name);
+
+wait(SortETS,File_Name,BigETS,NumOfCores, Counter)->  
+										receive
+											finish -> wait(SortETS,File_Name,BigETS,NumOfCores, Counter+1)
+										end.
+
+spread(FirstKey, BigETS, Workers) -> {Key, List_Of_Keys} = give_N_Keys_From_First(BigETS,FirstKey,?SPREAD,0,[FirstKey]),
+									 lists:nth(random:uniform(?NumOfCores),Workers)!{List_Of_Keys},
+									 Key.
+
+give_N_Keys_From_First(_ETS,First,N,N,List_Of_Returned_Keys) -> {First, List_Of_Returned_Keys};
+
+give_N_Keys_From_First(ETS,First,N,Counter,List_Of_Returned_Keys) -> 
+														Next = ets:next(ETS, First),
+															case Next of
+																'$end_of_table' -> {Next, List_Of_Returned_Keys};
+																Next -> give_N_Keys_From_First(ETS,Next,N,Counter+1,[Next] ++ List_Of_Returned_Keys)
+															end.
+
+%give_N_Keys_From_Last(_ETS,First,N,N,List_Of_Returned_Keys) -> {First, List_Of_Returned_Keys};
+
+%give_N_Keys_From_Last(ETS,Last,N,Counter,List_Of_Returned_Keys) -> 
+%														Next = ets:prev(ETS, Last),
+%															case Next of
+%																'$end_of_table' -> {Next, List_Of_Returned_Keys};
+%																Next -> give_N_Keys_From_Last(ETS,Next,N,Counter+1,[Next] ++ List_Of_Returned_Keys)
+%															end.
+
+finish(SortETS, File_Name) -> 
+							io:format("~n...Convert ETS degree to DETS degree called degreeDets. ~n"),
+							{ok,Name}=dets:open_file(degreeDets,[{type,set}]),
+							Name = ets:to_dets(SortETS,Name),
+							ok=dets:close(Name),loop_Writing(SortETS,ets:last(SortETS), File_Name).
+loop_Writing(SortETS, First, File_Name) ->
+									
+									case (First) of
+										'$end_of_table' -> file:close(File_Name),io:format("~n Finish writing to degree file ~n"),
+														   ets:delete(SortETS),
+														   map2!{stop},
+														   ok;
+										Key -> [{Key,Val}] = ets:lookup(SortETS, Key),
+											  % ets:delete(SortETS,Key),
+											   NewVal = "\nDegree is:\s " ++ integer_to_list(Key) ++ "\s\s\sAuthors are:\s ",
+											   [ok=file:write(File_Name,NewVal ++ Author) || Author <- lists:sort(Val)],
+												Next = ets:prev(SortETS,Key),
+												loop_Writing(SortETS, Next, File_Name)
+									end.0
+				
+work(BigETS, SortETS)->
+							receive
+								{List_Name} -> [check_For_Name(BigETS, SortETS, Name) || Name <- List_Name], 
+												work(BigETS, SortETS);
+								{stop,Pid}  -> Pid!finish, 
+											   io:format("~nWorker with PID stoped: ~p",[self()])								
+							end.
+check_For_Name(BigETS,SortETS, Name) ->
+								 [{Name,Colleagues}] = ets:lookup(BigETS, Name),
+								 %ets:delete(BigETS,Name),							
+										Length_Of_Colleagues = length(Colleagues),
+										Value = ets:lookup(SortETS, Length_Of_Colleagues),
+											case (Value) of
+												[]-> ets:insert(SortETS, {Length_Of_Colleagues,[Name]});
+												[{Key,Val}]-> NewVal = [Name]++Val,
+															  ets:insert(SortETS, {Key,NewVal})
+											end.
+
+first_Time_Write_To_File() -> io:format("~nOpen the degrees file... Start ,MapReduce 2... ~n"),
+							  {ok,Name} = file:open("degrees.txt",[write]),
+							  	file:write(Name, "This is The Authors Degree file sorted from high to low :\n"),{ok,Name}.

@@ -1,0 +1,76 @@
+erl -smp -setcookie a -name Main@10.0.0.2
+
+c(handleDataNew),c(mapReduce),c(wxBuilderF),c(mapReduce1),c(xmlToDets),c(mapReduce2),c(mapReduceVer3).
+
+
+c(mapReduceMAIN).
+mapReduceMAIN:start().
+
+erl -smp -setcookie a -name S1@132.72.18.79
+erl -smp -setcookie a -name S2@132.72.18.81
+erl -smp -setcookie a -name S3@132.72.18.198
+erl -smp -setcookie a -name S4@132.72.18.80
+erl -smp -setcookie a -name Main@10.0.0.2
+
+erl +S1:1 -setcookie a -name S1@132.72.245.204
+erl +S1:1 -setcookie a -name S2@132.72.18.88
+erl +S1:1 -setcookie a -name S3@132.72.18.73
+erl +S1:1 -setcookie a -name S4@132.72.18.85
+erl +S4:4 -setcookie a -name Main@10.0.0.2
+
+observer:start().
+timer:tc(mapReduce,start2,[]).
+
+mapReduce:start0().
+mapReduce:start1().
+mapReduce:start2().
+mapReduce:start3().
+mapReduce:start4().
+mapReduceMAIN:start().
+
+erl -smp -setcookie a -name Main@10.0.0.2
+c(a).
+a:a().
+
+
+%%spawn DOT FILE
+spawn(os,cmd,["xdot Graph3.dot"]).
+
+ETS = ets:new(bigETS, [set,public, {read_concurrency,true} ]),
+{ok,Name}=dets:open_file(myDets,[{access,read}]),
+ETS = dets:to_ets(Name,ETS),
+ok=dets:close(Name).
+
+
+%Only run this once to read from XML to Dets file
+mapReduce:initialize().
+
+
+c(handleDataNew),c(mapReduce),c(wxBuilder),c(mapReduce1),c(xmlToDets),c(mapReduceVer2),c(tempTable).
+mapReduce:start1().
+
+c(handleDataNew),c(mapReduce),c(wxBuilder),
+c(mapReduce1),c(xmlToDets),c(mapReduceVer2),c(tempTable).
+
+ETS = tempTable:start(),mapReduceVer2:start(ETS).
+
+NOW1=now(),mapReduce:start2(),NOW2=now(),TIME_DIFF=timer:now_diff(NOW2,NOW1),
+io:format("The total time in hours is : ~p",[TotalTime_In_Hours = TIME_DIFF/(3600*1000)]).
+
+
+c(handleDataNew),c(mapReduce),c(wxBuilder),
+c(mapReduce1),c(xmlToDets),c(mapReduceVer2),c(tempTable),NOW1=now(),mapReduce:start2(),NOW2=now(),TIME_DIFF=timer:now_diff(NOW2,NOW1),
+TotalTime_In_Hours = TIME_DIFF/(3600*1000),io:format("~n Total time for mapReduce:start2() is:",[TotalTime_In_Hours]).
+
+
+
+c(mapReduce),c(mapReduce1),c(handleDataNew).
+A1=mapReduce:start0().
+mapReduce1:start(A1,"ron",5).
+
+
+
+
+ets:tab2list(A1).
+ets:lookup(A1,"ron").
+

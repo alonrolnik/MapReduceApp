@@ -1,0 +1,186 @@
+%% Authors: alon Rolnik, Ron Schmid
+%% Created: Aug 1, 2012
+%% Description: TODO: Add description to mapReduce
+-module(mapReduceMAIN).
+-export([start1/0,start2/0,start3/0,start4/0,initialize/0,start0/0]).
+-define (ETS,tempDets).
+initialize()-> xmlToDets:start().
+start1() -> spawn(fun() -> map1() end).
+%start2() -> spawn(fun() -> map2() end).
+%start3() -> spawn(fun() -> map3() end).
+%start1() -> map1().
+start2() -> map2().
+start3() -> map3().
+start4() -> map4().
+
+
+start0() -> 
+	ETS = 	   ets:new(et,[ordered_set,public]),	
+%% 	spawn(handleDataNew,addNames,[ETS1,["ron","alon","doron","itai"]]),
+%% 	spawn(handleDataNew,addNames,[ETS1,["shai","alon","doron"]]),
+%% 	spawn(handleDataNew,addNames,[ETS1,["doron","ilan","meital"]]),
+%% 	spawn(handleDataNew,addNames,[ETS1,["itai","ilan"]]),
+%% 	spawn(handleDataNew,addNames,[ETS1,["ilan","motti","Rivka"]]),
+%% 	spawn(handleDataNew,addNames,[ETS1,["a","b","Rivka"]]),
+%% 	spawn(handleDataNew,addNames,[ETS1,["b","poll","interrupt"]]),
+	handleDataNew:addNames(ETS, ["Shahar","Ron","Teddy","Irith"]),
+	handleDataNew:addNames(ETS, ["Irith","Eli","Danny","Youval","Tzadok"]),
+	handleDataNew:addNames(ETS, ["Danny","Eti","Shira","Hila","Dorin","Shauli"]),
+	handleDataNew:addNames(ETS, ["Tzadok","Galit","Stav","Shaked","Carmel"]),
+	handleDataNew:addNames(ETS, ["Shahar","Ron","Amit","Itay"]),
+	handleDataNew:addNames(ETS, ["Shahar","Talia","May"]),
+	handleDataNew:addNames(ETS, ["Talia","Shilat","Sapir"]),
+	handleDataNew:addNames(ETS, ["Sapir","Adam"]),
+	handleDataNew:addNames(ETS, ["Adam","Gilad","Aviad"]),
+	handleDataNew:addNames(ETS, ["Aviad","Darshan","Alon","Bobo"]),
+	handleDataNew:addNames(ETS, ["Bobo","Bonzo"]),
+	handleDataNew:addNames(ETS, ["Bonzo","Shuper Sal Sheli"]),
+	handleDataNew:addNames(ETS, ["Shuper Sal Sheli","Merkaz"]),
+	handleDataNew:addNames(ETS, ["Merkaz","Leyad Hashuk"]),
+	handleDataNew:addNames(ETS, ["May","Almog","Daniel","Adi"]),
+	handleDataNew:addNames(ETS, ["Dorin","Adar","Yonatan","Daniel"]),
+	handleDataNew:addNames(ETS, ["Itay","Hila Shel Itay"]),
+	handleDataNew:addNames(ETS, ["Amit","Maya","Reyee","Gili"]),
+	handleDataNew:addNames(ETS, ["Reyee","Hatih"]),
+	handleDataNew:addNames(ETS, ["Gilad","Kapuerra","Yeled Maafan"]),
+
+	
+
+%% part 1	
+%% 		register(map1,self()),	
+%% 		WXPid = spawn (wxBuilder,start,[]),
+%% 		wait1(WXPid,ETS).
+
+%% part 2 V1
+%% 		register(map2,self()),
+%% 		spawn(mapReduceVer2,start,[ETS]),
+%% 			receive
+%%				{stop} -> io:format("Part 2 finished~n"),unregister(map2),ok
+%% 			end.
+
+%%part 2 V2
+%		register(map2,self()),
+		spawn(mapReduce2,start,[]).
+%			receive
+%				{stop} -> io:format("Part 2 finished~n"),unregister(map2),ok
+%			end.
+
+	
+%% %%part3
+%% 		register(map3,self()),
+%% 		WXPid = spawn (wxBuilder3,start,[]),		
+%% 		io:format("Size of Rank ETS is: ~p~n",[mapReduceVer3:sizeOfTable(ETS)]),		
+%% 		wait3(WXPid,ETS).
+
+
+
+
+
+
+
+map1()->
+		register(map1,self()),
+		WXPid = spawn (wxBuilder,start,[]),
+		
+		ETS = ets:new(bigETS, [set,public, {read_concurrency,true} ]),
+		{ok,Name}=dets:open_file(myDets,[{access,read}]),
+		ETS = dets:to_ets(Name,ETS),
+		ok=dets:close(Name),
+		
+		wait1(WXPid,ETS).
+
+map2() ->
+		register(map2,self()),
+		
+		ETS = ets:new(bigETS, [ordered_set,public,{read_concurrency, true}]),
+		{ok,Name2}=dets:open_file(?ETS,[{access,read}]),
+		ETS = dets:to_ets(Name2,ETS),
+		ok=dets:close(Name2),
+		
+		spawn(mapReduce2,start,[ETS]),
+	receive
+		{stop} -> io:format("Part 2 finished~n"),unregister(map2),ok
+	end.
+
+map3() ->
+		register(map3,self()),
+		WXPid = spawn (wxBuilder3,start,[]),
+		
+		BigETS = ets:new(bigETS, [set,public, {read_concurrency,true} ]),
+		{ok,Name4}=dets:open_file(myDets,[{access,read}]),
+		BigETS = dets:to_ets(Name4,BigETS),
+		ok=dets:close(Name4),		
+		
+		wait3(WXPid,BigETS).
+
+
+
+
+map4()->
+		register(map4,self()),
+
+		WXPid = spawn (wxBuilderF,start,[]),
+		
+		ETS = ets:new(bigETS, [set,public, {read_concurrency,true} ]),
+		{ok,Name}=dets:open_file(myDets,[{access,read}]),
+		ETS = dets:to_ets(Name,ETS),
+		ok=dets:close(Name),
+	
+		wait4(WXPid,ETS).
+
+
+wait4(WXPid, ETS)->
+
+	receive
+%Sehif 1		
+		{WXPid,conTree,AuthorName,Depth} -> WXPid!done,
+											spawn(mapReduce1,start,[ETS, AuthorName, Depth]),
+											wait4(WXPid,ETS);
+		
+		
+%Sehif 3		
+		{WXPid,getSize}			->			SizeOfTable=mapReduceVer3:sizeOfTable(ETS),
+											WXPid!{sizeIs,SizeOfTable},
+											wait4(WXPid,ETS);
+		{WXPid,eliteGroup,N}	-> 			io:format("Request for top ~p authers received!! ~n",[N]),
+											WXPid!done,
+											spawn(mapReduceVer3,start,[ETS, N]),
+											wait4(WXPid,ETS);
+
+%General
+		{stop} -> unregister(map4), ets:delete(ETS), io:format("Thank you, All done and finished~n"),ok
+	end.
+
+
+
+
+
+
+
+
+
+
+
+
+wait1(WXPid, ETS)->
+	
+	receive
+		{WXPid,conTree,AuthorName,Depth} -> WXPid!done,
+											spawn(mapReduce1,start,[ETS, AuthorName, Depth]),
+											wait1(WXPid,ETS);
+		{stop} -> unregister(map1), ets:delete(ETS), io:format("Part 1 finished~n"),ok
+	end.
+
+wait3(WXPid,BigETS)->
+
+	receive
+		{WXPid,getSize}			->			SizeOfTable=mapReduceVer3:sizeOfTable(BigETS),
+											WXPid!{sizeIs,SizeOfTable},
+											wait3(WXPid,BigETS);
+		{WXPid,eliteGroup,N}	-> 			io:format("Request for top ~p authers received!! ~n",[N]),
+											WXPid!done,
+											spawn(mapReduceVer3,start,[BigETS, N]),
+											wait3(WXPid,BigETS);
+		{stop} -> unregister(map3), ets:delete(BigETS), io:format("Part 3 finished~n"),ok
+	end.
+

@@ -1,0 +1,21 @@
+update IP address in mapReduce1.erl lines:
+12-15
+update IP address in mapReduce2.erl lines:
+15-18
+49-52
+edit num of comuters in mapReduce2.erl line 7 (COMPUTERS)
+limit num of cores in mapReduce2.erl lines 15-18
+edit num of comuters in mapReduce1.erl line 9 (COMPUTERS)
+edit size of chunks in mapReduce2.erl lines 6 (SPREAD)
+
+type: (with desired number of cores)
+
+erl +S4:4 -setcookie a -name S1@132.72.245.204
+erl +S4:4 -setcookie a -name S2@132.72.18.88
+erl +S4:4 -setcookie a -name S3@132.72.18.73
+erl +S4:4 -setcookie a -name S4@132.72.18.85
+
+c(handleDataNew),c(mapReduce),c(wxBuilderF),c(mapReduce1),c(xmlToDets),c(mapReduce2),c(mapReduceVer3),c(mapReduceMAIN).
+
+observer:start().
+mapReduceMAIN:start().

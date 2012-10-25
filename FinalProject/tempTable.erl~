@@ -1,0 +1,30 @@
+%% Author: alon
+%% Created: Aug 16, 2012
+%% Description: TODO: Add description to tempTable
+-module(tempTable).
+-export([start/0]).
+start()-> 
+	ETS = ets:new(tempETS, [ordered_set,public]),
+	handleDataNew:addNames(ETS, ["a","b","c","p"]),
+	handleDataNew:addNames(ETS, ["b","a","c","d","p"]),
+	handleDataNew:addNames(ETS, ["c","a","b","d"]),
+	handleDataNew:addNames(ETS, ["d","b","c","p"]),
+	handleDataNew:addNames(ETS, ["i","j","k"]),
+	handleDataNew:addNames(ETS, ["j","i","k"]),
+	handleDataNew:addNames(ETS, ["k","i","j"]),
+	handleDataNew:addNames(ETS, ["h","v","l"]),
+	handleDataNew:addNames(ETS, ["v","h","l"]),
+	handleDataNew:addNames(ETS, ["l","h","v","z"]),
+	handleDataNew:addNames(ETS, ["z","l","v"]),
+	handleDataNew:addNames(ETS, ["v","h","z"]),
+	handleDataNew:addNames(ETS, ["aaa"]),
+	handleDataNew:addNames(ETS, ["aab","aaa"]),
+	handleDataNew:addNames(ETS, ["p","a","b","d"]),
+	handleDataNew:addNames(ETS, ["pp","aa","bb","dd","ee"]),
+	handleDataNew:addNames(ETS, ["aa","pp","bb","dd","ee"]),
+	handleDataNew:addNames(ETS, ["bb","aa","pp","dd","ee"]),
+	handleDataNew:addNames(ETS, ["dd","aa","bb","pp","ee"]),
+	handleDataNew:addNames(ETS, ["ee","aa","bb","dd","pp"]),
+	
+
+	ETS.

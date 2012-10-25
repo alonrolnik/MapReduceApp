@@ -1,0 +1,276 @@
+%% Author: 
+%% Created: Aug 16, 2012
+%% Description: TODO: Add description to mapReduce1
+-module(mapReduce2).
+
+-export([start/0,initializeWorker/2]).
+%-compile(export_all).
+-define(COMPUTERS,1).
+
+%a flag for choosing number of cores for each computer
+-define(CoresToUse,0).			%"0" => use Maximum cores available
+								%"1" =>	use limitation mentioned in COMP#CORE for eaqch computer
+
+-define (MAIN, 	'Main@10.0.0.2').		-define(COMPMAINCORE,1).						% This is Where fold and write run (UI)
+-define (C1, 	'S1@10.0.0.2').			-define(COMP1CORE,1).
+-define (C2, 	'S2@10.0.0.2').			-define(COMP2CORE,2).
+-define (C3, 	'S3@10.0.0.2').			-define(COMP3CORE,3).
+-define (C4, 	'S4@10.0.0.2').			-define(COMP4CORE,4).
+-define (ListOfStations, [?MAIN,?C1,?C2,?C3,?C4]).
+
+%%MAIN
+start() ->
+	MainPID=self(),		
+	CompList=lists:sublist(?ListOfStations, ?COMPUTERS),
+	WorkStations =[spawn(Where,mapReduce2,initializeWorker,[MainPID,Where]) || Where <- CompList],	%spawn workers in other COMPUTERS
+	ThredList=initializeMain(?COMPUTERS,[]),
+	io:format("ThredList is ~p~n",[ThredList]),
+	ok.
+	
+	
+	
+initializeMain(0,ThredList)->	ThredList;
+initializeMain(I,ThredList)->
+	receive
+		{stationDone}		->	initializeMain(I-1,ThredList);
+		{stationID,Name}	->	NewThredList=[Name]++ThredList,
+								initializeMain(I,NewThredList)
+	end.	
+
+
+initializeWorker(MainPID,Name)->	
+%use MAXIMUM or limit number of core for this certain computer, uses flag "CoresToUse" in define
+	case (?CoresToUse) of
+		0->NumberOfCores=erlang:system_info(logical_processors_available);
+		1->	case (Name) of
+				'S1@10.0.0.2'	->	NumberOfCores=?COMP1CORE;
+				'S2@10.0.0.2'	->	NumberOfCores=?COMP2CORE;
+				'S3@10.0.0.2'	->	NumberOfCores=?COMP3CORE;
+				'S4@10.0.0.2'	->	NumberOfCores=?COMP4CORE;
+				'Main@10.0.0.2'	->	NumberOfCores=?COMPMAINCORE;
+				_				->	NumberOfCores=erlang:system_info(logical_processors_available)
+			end
+	end,
+	sendNumOfCores(MainPID,Name,NumberOfCores).
+
+
+
+sendNumOfCores(MainPID,_Name, 0)			->	MainPID!{stationDone};
+sendNumOfCores(MainPID,Name, NumberOfCores)	->	MainPID!{stationID,Name},
+												sendNumOfCores(MainPID,Name, NumberOfCores-1).
+
+	
+	
+	
+%% 	
+%% 	
+%% 							%main PID
+%% 	
+%% 	WorkStations =[spawn(Where,mapReduce2,wakeUpWorkers,[MainPID]) || Where <- CompList],	%spawn workers in other COMPUTERS
+%% 	
+%% 	
+%% 	
+%% 	
+%% 
+%% 		
+%% wakeUpWorkers (MainPID)->
+%% 	ThreadList = [spawn(fun() -> waitForCommand(BigETS,SortETS) end) || _ <-lists:seq(1, ?NumOfCores)],
+%% 
+%% 	[spawn(worker,mapReduce1,check_For_Name,[BigETS, NewName, FoldPid,CurrentDepth+1]) || NewName <- UpdatedList]
+%% 		%% 	
+%% 	
+%% 	MainPID=self(),								%main PID
+%% 	
+%% 	WorkStations =[spawn(Where,mapReduce2,wakeUpWorkers,[MainPID]) || Where <- CompList],	%spawn workers in other COMPUTERS
+%% 	
+%% 	
+%% 	
+%% 	
+%% 
+%% 		
+%% wakeUpWorkers (MainPID)->
+%% 	ThreadList = [spawn(fun() -> waitForCommand(BigETS,SortETS) end) || _ <-lists:seq(1, ?NumOfCores)],
+%% 
+%% 	[spawn(worker,mapReduce1,check_For_Name,[BigETS, NewName, FoldPid,CurrentDepth+1]) || NewName <- UpdatedList]
+%% 		
+%% 		
+%% 		
+%% 		
+%% 	
+%% 	
+%% 	
+%% 	First = ets:first(BigETS),					%get first in big list 
+%% 	[{First,Value}]=ets:lookup(BigETS,First),
+%% %	io:format("{First,Value} ~p~n",[{First,Value}]).
+%% 	devideETS(BigETS,Workers,First,Value).		%go to divide
+%% 
+%% 
+%% devideETS(BigETS,Workers,'$end_of_table',Vals)	->		RankETS = ets:new(bigETS, [ordered_set,public ]),	%create ordered ETS
+%% 														mergeAnswers(RankETS,?COMPUTERS);					%go merge them
+%% devideETS(BigETS,Workers,Next,Vals)				->
+%% 	Where=lists:nth(random:uniform(?COMPUTERS),?ListOfStations),		%randomize a computer to send to
+%% 	Where!{addToSmallETS,Next,Vals},									%send to other computer 
+%% 	[{Next2,Vals2}] = ets:next(BigETS),									%get next item from table
+%% 	devideETS(BigETS,Workers,Next2,Vals2).								% do again
+%% 
+%% mergeAnswers(RankETS,0)				->			makeDETS(RankETS);%all done
+%% 
+%% mergeAnswers(RankETS,NumOfStations)->
+%% 		receive
+%% 			{addToSort,Next,Data}	->	ets:insert(RankETS,{Next,Data}),
+%% 										mergeAnswers(RankETS,NumOfStations);
+%% 			{noMore} 				->	mergeAnswers(RankETS,NumOfStations-1)
+%% 		end.
+%% 
+%% 
+%%   
+%% 
+%% 
+%% %%WORKERS
+%% workTillDeath(MainPID)->
+%% 		MyPID=self(),
+%% 		io:format("Process ~p~n",[MyPID]).
+%% 		%ETS = ets:new(bigETS, [set,public, {read_concurrency,true} ]),
+%% 		%workTillDeath(MainPID,ETS).
+%% 
+%% workTillDeath(MainPID,ETS)->	
+%% 		receive
+%% 			{addToSmallETS,Key,Value}	->	ets:insert(ETS,{Key,Value}),
+%% 											workTillDeath(MainPID,ETS);
+%% 			{doneSplitting} 			->	startWorking(MainPID,ETS)
+%% 		end.
+%% 					
+%% startWorking(MainPID,ETS)->
+%% 	mapReduceVer2:start(ETS),
+%% 	[{First,Vals}] = ets:first(ETS),
+%% 	startUnite(MainPID,ETS,First,Vals).
+%%   
+%%  
+%% startUnite(MainPID,ETS,'$end_of_table',Data)->	MainPID!{noMore};		
+%% startUnite(MainPID,ETS,Next,Data)			->	MainPID!{addToSort,Next,Data},			%get first in big list 
+%% 												[{Next2,Val}] = ets:next(ETS),
+%% 												startUnite(MainPID,ETS,Next2,Val).
+%% 
+%% 
+%% %%SYSTEM
+%% 
+%% makeDETS(RankETS)->
+%% 	io:format("~n...Convert ETS degree to DETS degree called degreeDetsFinal. ~n"),
+%% 	{ok,File_Name} = first_Time_Write_To_File(),
+%% 	{ok,Name}=dets:open_file(degreeDetsFinal,[{type,set}]),
+%% 	Name = ets:to_dets(RankETS,Name),
+%% 	ok=dets:close(Name),
+%% 	loop_Writing(RankETS,ets:last(RankETS), RankETS).
+%% 
+%% 
+%% loop_Writing(RankETS, First, File_Name) ->
+%% 									
+%% 									case (First) of
+%% 										'$end_of_table' -> file:close(File_Name),io:format("~n Finish writing to degree file ~n"),
+%% 														   ets:delete(RankETS),
+%% 														   map2!{stop},
+%% 														   ok;
+%% 										Key -> [{Key,Val}] = ets:lookup(RankETS, Key),
+%% 											  % ets:delete(SortETS,Key),
+%% 											   NewVal = "\nDegree is:\s " ++ integer_to_list(Key) ++ "\s\s\sAuthors are:\s ",
+%% 											   [ok=file:write(File_Name,NewVal ++ Author) || Author <- lists:sort(Val)],
+%% 												Next = ets:prev(RankETS,Key),
+%% 												loop_Writing(RankETS, Next, File_Name)
+%% 									end.
+%% 
+%%   
+%% first_Time_Write_To_File() -> io:format("~nOpen the degrees file... Start ,MapReduce 2... ~n"),
+%% 							  {ok,Name} = file:open("degrees.txt",[write]),
+%% 							  	file:write(Name, "This is The Authors Degree file sorted from high to low :\n"),{ok,Name}.
+%% 
+
+%% 		
+%% 		
+%% 		
+%% 	
+%% 	
+%% 	
+%% 	First = ets:first(BigETS),					%get first in big list 
+%% 	[{First,Value}]=ets:lookup(BigETS,First),
+%% %	io:format("{First,Value} ~p~n",[{First,Value}]).
+%% 	devideETS(BigETS,Workers,First,Value).		%go to divide
+%% 
+%% 
+%% devideETS(BigETS,Workers,'$end_of_table',Vals)	->		RankETS = ets:new(bigETS, [ordered_set,public ]),	%create ordered ETS
+%% 														mergeAnswers(RankETS,?COMPUTERS);					%go merge them
+%% devideETS(BigETS,Workers,Next,Vals)				->
+%% 	Where=lists:nth(random:uniform(?COMPUTERS),?ListOfStations),		%randomize a computer to send to
+%% 	Where!{addToSmallETS,Next,Vals},									%send to other computer 
+%% 	[{Next2,Vals2}] = ets:next(BigETS),									%get next item from table
+%% 	devideETS(BigETS,Workers,Next2,Vals2).								% do again
+%% 
+%% mergeAnswers(RankETS,0)				->			makeDETS(RankETS);%all done
+%% 
+%% mergeAnswers(RankETS,NumOfStations)->
+%% 		receive
+%% 			{addToSort,Next,Data}	->	ets:insert(RankETS,{Next,Data}),
+%% 										mergeAnswers(RankETS,NumOfStations);
+%% 			{noMore} 				->	mergeAnswers(RankETS,NumOfStations-1)
+%% 		end.
+%% 
+%% 
+%%   
+%% 
+%% 
+%% %%WORKERS
+%% workTillDeath(MainPID)->
+%% 		MyPID=self(),
+%% 		io:format("Process ~p~n",[MyPID]).
+%% 		%ETS = ets:new(bigETS, [set,public, {read_concurrency,true} ]),
+%% 		%workTillDeath(MainPID,ETS).
+%% 
+%% workTillDeath(MainPID,ETS)->	
+%% 		receive
+%% 			{addToSmallETS,Key,Value}	->	ets:insert(ETS,{Key,Value}),
+%% 											workTillDeath(MainPID,ETS);
+%% 			{doneSplitting} 			->	startWorking(MainPID,ETS)
+%% 		end.
+%% 					
+%% startWorking(MainPID,ETS)->
+%% 	mapReduceVer2:start(ETS),
+%% 	[{First,Vals}] = ets:first(ETS),
+%% 	startUnite(MainPID,ETS,First,Vals).
+%%   
+%%  
+%% startUnite(MainPID,ETS,'$end_of_table',Data)->	MainPID!{noMore};		
+%% startUnite(MainPID,ETS,Next,Data)			->	MainPID!{addToSort,Next,Data},			%get first in big list 
+%% 												[{Next2,Val}] = ets:next(ETS),
+%% 												startUnite(MainPID,ETS,Next2,Val).
+%% 
+%% 
+%% %%SYSTEM
+%% 
+%% makeDETS(RankETS)->
+%% 	io:format("~n...Convert ETS degree to DETS degree called degreeDetsFinal. ~n"),
+%% 	{ok,File_Name} = first_Time_Write_To_File(),
+%% 	{ok,Name}=dets:open_file(degreeDetsFinal,[{type,set}]),
+%% 	Name = ets:to_dets(RankETS,Name),
+%% 	ok=dets:close(Name),
+%% 	loop_Writing(RankETS,ets:last(RankETS), RankETS).
+%% 
+%% 
+%% loop_Writing(RankETS, First, File_Name) ->
+%% 									
+%% 									case (First) of
+%% 										'$end_of_table' -> file:close(File_Name),io:format("~n Finish writing to degree file ~n"),
+%% 														   ets:delete(RankETS),
+%% 														   map2!{stop},
+%% 														   ok;
+%% 										Key -> [{Key,Val}] = ets:lookup(RankETS, Key),
+%% 											  % ets:delete(SortETS,Key),
+%% 											   NewVal = "\nDegree is:\s " ++ integer_to_list(Key) ++ "\s\s\sAuthors are:\s ",
+%% 											   [ok=file:write(File_Name,NewVal ++ Author) || Author <- lists:sort(Val)],
+%% 												Next = ets:prev(RankETS,Key),
+%% 												loop_Writing(RankETS, Next, File_Name)
+%% 									end.
+%% 
+%%   
+%% first_Time_Write_To_File() -> io:format("~nOpen the degrees file... Start ,MapReduce 2... ~n"),
+%% 							  {ok,Name} = file:open("degrees.txt",[write]),
+%% 							  	file:write(Name, "This is The Authors Degree file sorted from high to low :\n"),{ok,Name}.
+%% 

@@ -1,0 +1,11 @@
+graph ranked_graph{
+graph [fontsize=1000];
+edge  [fontsize=1000];
+node  [fontsize=1000];
+ranksep = 200;
+nodesep = 50;
+edge [style="setlinewidth(13)"]
+node [style="setlinewidth(43)"]
+"Wei Wang"[label= "Wei Wang 1129"]
+"Wei Li"[label= "Wei Li 901"]
+}
