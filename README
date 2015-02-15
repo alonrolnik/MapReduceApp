@@ -1,3 +1,15 @@
+###############################################################################################################
+##  Using the Erlang actor model to create a distributed DB of computer-science researchers' connections.   ###
+##   Each connection is a two or more researchers that wrote some paper or article together.                ###   
+##   On that DB run any map-reduce computations for analytics.                                              ###
+##   For example, get the most connected researchers,                                                       ###  
+##   Or get the one that wrote the largest number of articles etc...                                        ###
+###############################################################################################################
+
+
+
+
+
 update IP address in mapReduce1.erl lines:
 12-15
 update IP address in mapReduce2.erl lines:
